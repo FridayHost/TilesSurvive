@@ -35,7 +35,9 @@ if (typeof firebase === 'undefined') {
     window.getUser = async (telegramId) => {
       try {
         const doc = await db.collection('users').doc(String(telegramId)).get();
-        return doc.exists ? doc.data() : null;
+        const data = doc.exists ? doc.data() : null;
+        console.log('📥 User data:', data);
+        return data;
       } catch (error) {
         console.error('❌ Firestore get error:', error);
         return null;
