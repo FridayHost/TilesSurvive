@@ -6,25 +6,32 @@
   <title>Profile</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .loading { text-align: center; padding: 50px; color: #666; }
+  </style>
 </head>
 <body>
   <div class="container">
-    <div class="profile-header">
-      <h2 id="profile-nickname">Loading...</h2>
-      <p>Уровень станции:</p>
-      <div class="level-badge" id="profile-level">--</div>
-    </div>
-
-    <nav class="main-menu">
-      <a href="schedule.html" class="menu-btn">📅 Расписание</a>
-      <a href="profile.html" class="menu-btn active">👤 Профиль</a>
-      <a href="news.html" class="menu-btn">📰 Новости</a>
-      <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
-      <a href="channels.html" class="menu-btn">📢 Каналы</a>
-      <a href="support.html" class="menu-btn">❓ Поддержка</a>
-    </nav>
+    <div id="loading" class="loading">Загрузка профиля...</div>
     
-    <button id="logout-btn" class="secondary-btn">Выйти</button>
+    <div id="profile-content" style="display: none;">
+      <div class="profile-header">
+        <h2 id="profile-nickname">Loading...</h2>
+        <p>Уровень станции:</p>
+        <div class="level-badge" id="profile-level">--</div>
+      </div>
+
+      <nav class="main-menu">
+        <a href="schedule.html" class="menu-btn">📅 Расписание</a>
+        <a href="profile.html" class="menu-btn active">👤 Профиль</a>
+        <a href="news.html" class="menu-btn">📰 Новости</a>
+        <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
+        <a href="channels.html" class="menu-btn">📢 Каналы</a>
+        <a href="support.html" class="menu-btn">❓ Поддержка</a>
+      </nav>
+      
+      <button id="logout-btn" class="secondary-btn">Выйти</button>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -37,17 +44,32 @@
 
     window.addEventListener('load', async () => {
       const telegramId = tg.initDataUnsafe?.user?.id;
+      
+      if (!telegramId) {
+        document.getElementById('loading').textContent = '❌ Ошибка: не удалось получить данные Telegram';
+        return;
+      }
+      
       const user = await getUser(telegramId);
       
       if (user) {
+        // Пользователь найден — показываем профиль
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('profile-content').style.display = 'block';
+        
         document.getElementById('profile-nickname').textContent = user.nickname;
         document.getElementById('profile-level').textContent = user.level;
+        
+        console.log('✅ Profile loaded for:', user.nickname);
       } else {
+        // Пользователь не найден — возвращаем на регистрацию
+        console.log('⚠️ User not found, redirecting to registration');
         window.location.href = 'index.html';
       }
     });
 
     document.getElementById('logout-btn')?.addEventListener('click', () => {
+      // Очищаем локальные данные (Firebase данные не удаляем)
       localStorage.removeItem('tma_user');
       window.location.href = 'index.html';
     });
