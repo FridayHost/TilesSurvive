@@ -1,0 +1,47 @@
+// Проверяем, что Firebase загружен
+if (typeof firebase === 'undefined') {
+  console.error('❌ Firebase SDK not loaded! Check index.html');
+  
+  // Заглушка для тестов без Firebase
+  window.saveUser = async (data) => {
+    console.log('⚠️ Mock save (Firebase not loaded):', data);
+    return true;
+  };
+  
+  window.getUser = async (id) => {
+    return JSON.parse(localStorage.getItem('tma_user'));
+  };
+} else {
+  console.log('🔥 Firebase SDK loaded, initializing...');
+  
+  try {
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    console.log('✅ Firebase initialized');
+    
+    // Сохранить пользователя
+    window.saveUser = async (userData) => {
+      try {
+        await db.collection('users').doc(String(userData.telegram_id)).set(userData);
+        console.log('✅ User saved to Firestore');
+        return true;
+      } catch (error) {
+        console.error('❌ Firestore save error:', error);
+        return false;
+      }
+    };
+    
+    // Получить пользователя
+    window.getUser = async (telegramId) => {
+      try {
+        const doc = await db.collection('users').doc(String(telegramId)).get();
+        return doc.exists ? doc.data() : null;
+      } catch (error) {
+        console.error('❌ Firestore get error:', error);
+        return null;
+      }
+    };
+  } catch (err) {
+    console.error('❌ Firebase init error:', err);
+  }
+}
