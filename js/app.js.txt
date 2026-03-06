@@ -1,0 +1,23 @@
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+document.getElementById('regForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const user = {
+    nick: document.getElementById('nick').value,
+    union: document.getElementById('union').value,
+    state: document.getElementById('state').value,
+    level: document.getElementById('level').value,
+    telegramId: tg.initDataUnsafe?.user?.id
+  };
+  
+  // Сохраняем в localStorage (для теста)
+  localStorage.setItem('myAppUser', JSON.stringify(user));
+  
+  // Показываем сообщение
+  document.getElementById('msg').textContent = '✅ Зарегистрирован!';
+  
+  // Через 1.5 сек можно редиректить на profile.html
+  // window.location.href = 'profile.html';
+});
