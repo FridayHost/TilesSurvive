@@ -1,31 +1,34 @@
+// js/api.js
+
+// 🔴 ВАЖНО: Сразу создаем заглушки, чтобы не было ошибки "not defined"
+window.saveUser = async (data) => {
+  console.error('❌ saveUser: Firebase not initialized');
+  return false;
+};
+
+window.getUser = async (id) => {
+  console.error('❌ getUser: Firebase not initialized');
+  return null;
+};
+
+window.deleteUser = async (id) => {
+  console.error('❌ deleteUser: Firebase not initialized');
+  return false;
+};
+
 // Проверяем, что Firebase загружен
 if (typeof firebase === 'undefined') {
-  console.error('❌ Firebase SDK not loaded! Check index.html');
-  
-  // Заглушка для тестов без Firebase
-  window.saveUser = async (data) => {
-    console.log('⚠️ Mock save (Firebase not loaded):', data);
-    return true;
-  };
-  
-  window.getUser = async (id) => {
-    return JSON.parse(localStorage.getItem('tma_user'));
-  };
-  
-  window.deleteUser = async (id) => {
-    console.log('⚠️ Mock delete (Firebase not loaded):', id);
-    localStorage.removeItem('tma_user');
-    return true;
-  };
+  console.error('❌ Firebase SDK not loaded! Check index.html script order');
 } else {
-  console.log('🔥 Firebase SDK loaded, initializing...');
+  console.log('🔥 Firebase SDK found, initializing...');
   
   try {
+    // Инициализируем Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    console.log('✅ Firebase initialized');
+    console.log('✅ Firebase initialized successfully');
     
-    // Сохранить пользователя
+    // ✅ Сохранить пользователя
     window.saveUser = async (userData) => {
       try {
         await db.collection('users').doc(String(userData.telegram_id)).set(userData);
@@ -37,7 +40,7 @@ if (typeof firebase === 'undefined') {
       }
     };
     
-    // Получить пользователя
+    // ✅ Получить пользователя
     window.getUser = async (telegramId) => {
       try {
         const doc = await db.collection('users').doc(String(telegramId)).get();
@@ -53,15 +56,23 @@ if (typeof firebase === 'undefined') {
     // ✅ Удалить пользователя
     window.deleteUser = async (telegramId) => {
       try {
+        console.log('🗑️ Deleting user:', telegramId);
         await db.collection('users').doc(String(telegramId)).delete();
-        console.log('✅ User deleted from Firestore:', telegramId);
+        console.log('✅ User deleted from Firestore');
         return true;
       } catch (error) {
         console.error('❌ Firestore delete error:', error);
         return false;
       }
     };
+    
   } catch (err) {
     console.error('❌ Firebase init error:', err);
   }
 }
+
+console.log('🏁 api.js loaded, functions available:', {
+  saveUser: typeof window.saveUser,
+  getUser: typeof window.getUser,
+  deleteUser: typeof window.deleteUser
+});
