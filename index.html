@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Telegram App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Регистрация</h1>
+    <form id="regForm">
+      <input type="text" id="nick" placeholder="Никнейм" required>
+      <input type="text" id="union" placeholder="Союз" required>
+      <input type="text" id="state" placeholder="Штат" required>
+      <input type="number" id="level" placeholder="Уровень (1-30)" min="1" max="30" required>
+      <button type="submit" class="btn">Зарегистрироваться</button>
+    </form>
+    <p id="msg"></p>
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>
