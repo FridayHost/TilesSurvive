@@ -1,0 +1,25 @@
+// Инициализация Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Сохранить пользователя
+async function saveUser(userData) {
+  try {
+    await db.collection('users').doc(String(userData.telegram_id)).set(userData);
+    return true;
+  } catch (error) {
+    console.error('Error saving user:', error);
+    return false;
+  }
+}
+
+// Получить пользователя
+async function getUser(telegramId) {
+  try {
+    const doc = await db.collection('users').doc(String(telegramId)).get();
+    return doc.exists ? doc.data() : null;
+  } catch (error) {
+    console.error('Error getting user:', error);
+    return null;
+  }
+}
