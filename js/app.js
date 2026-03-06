@@ -3,7 +3,7 @@ tg.expand();
 
 console.log('🚀 App started, User ID:', tg.initDataUnsafe?.user?.id);
 
-// Переводы
+// ... (ваши переводы translations остаются без изменений) ...
 const translations = {
   ru: {
     register_title: "Регистрация",
@@ -31,6 +31,7 @@ const translations = {
 
 let currentLang = 'ru';
 
+// ... (функции applyTranslations, updateLangButtons остаются без изменений) ...
 function applyTranslations() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
@@ -40,7 +41,6 @@ function applyTranslations() {
   });
 }
 
-// Переключение языка
 document.getElementById('lang-ru')?.addEventListener('click', () => {
   currentLang = 'ru';
   updateLangButtons();
@@ -57,6 +57,35 @@ function updateLangButtons() {
   document.getElementById('lang-ru')?.classList.toggle('active', currentLang === 'ru');
   document.getElementById('lang-en')?.classList.toggle('active', currentLang === 'en');
 }
+
+// ✅ ГЛАВНОЕ: Проверка при загрузке страницы
+window.addEventListener('load', async () => {
+  const telegramId = tg.initDataUnsafe?.user?.id;
+  
+  if (!telegramId) {
+    console.error('❌ Telegram ID not available');
+    showError('Ошибка: не удалось получить данные Telegram');
+    return;
+  }
+  
+  console.log('🔍 Checking if user exists:', telegramId);
+  
+  // Проверяем в Firebase
+  if (typeof getUser === 'function') {
+    const existingUser = await getUser(telegramId);
+    
+    if (existingUser) {
+      console.log('✅ User found, redirecting to profile...');
+      // Пользователь уже зарегистрирован — сразу в профиль
+      window.location.href = 'profile.html';
+      return;
+    }
+  }
+  
+  console.log('📝 New user, showing registration form');
+  // Пользователь новый — оставляем на странице регистрации
+  applyTranslations();
+});
 
 // Обработка регистрации
 document.getElementById('register-form')?.addEventListener('submit', async (e) => {
@@ -96,7 +125,6 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
   
   console.log('💾 Trying to save user...');
   
-  // Проверка: существует ли функция saveUser
   if (typeof saveUser !== 'function') {
     console.error('❌ saveUser function not found! Check api.js loading');
     showError('System error: saveUser not found');
@@ -111,7 +139,6 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
       console.log('✅ Success! Redirecting...');
       localStorage.setItem('tma_user', JSON.stringify(userData));
       
-      // Небольшая задержка перед переходом
       setTimeout(() => {
         window.location.href = 'profile.html';
       }, 500);
