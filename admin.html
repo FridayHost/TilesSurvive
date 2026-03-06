@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #3390ec; color: white; }
+    tr:hover { background: #f9f9f9; }
+    .loading { text-align: center; color: #666; padding: 20px; }
+    .error { color: #e53935; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>👥 Зарегистрированные пользователи</h2>
+    <div id="content">
+      <p class="loading">Загрузка...</p>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="config.js"></script>
+  
+  <script>
+    // 🔐 ПРОСТАЯ ЗАЩИТА: введите пароль
+    const ADMIN_PASSWORD = "mySecretPassword123"; // ⚠️ Поменяйте на свой!
+    
+    const entered = prompt("Введите пароль администратора:");
+    if (entered !== ADMIN_PASSWORD) {
+      document.getElementById('content').innerHTML = '<p class="error">❌ Доступ запрещён</p>';
+      throw new Error('Access denied');
+    }
+
+    // Инициализация Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Загрузка пользователей
+    async function loadUsers() {
+      try {
+        const snapshot = await db.collection('users').orderBy('registered_at', 'desc').get();
+        
+        if (snapshot.empty) {
+          document.getElementById('content').innerHTML = '<p>Пока нет зарегистрированных пользователей</p>';
+          return;
+        }
+
+        let html = '<table><thead><tr><th>ID</th><th>Ник</th><th>Союз</th><th>Штат</th><th>Уровень</th><th>Язык</th><th>Дата</th></tr></thead><tbody>';
+        
+        snapshot.forEach(doc => {
+          const u = doc.data();
+          html += `
+            <tr>
+              <td>${u.telegram_id || '-'}</td>
+              <td><strong>${u.nickname || '-'}</strong></td>
+              <td>${u.union || '-'}</td>
+              <td>${u.state || '-'}</td>
+              <td>${u.level || '-'}</td>
+              <td>${u.language || '-'}</td>
+              <td>${u.registered_at ? new Date(u.registered_at).toLocaleString('ru-RU') : '-'}</td>
+            </tr>
+          `;
+        });
+        
+        html += '</tbody></table>';
+        document.getElementById('content').innerHTML = html;
+        
+      } catch (err) {
+        console.error('Error:', err);
+        document.getElementById('content').innerHTML = `<p class="error">Ошибка загрузки: ${err.message}</p>`;
+      }
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>
