@@ -3,201 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile</title>
+  <title>Profile Test</title>
+  <!-- ✅ Чистые URL без пробелов -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
   <style>
-    :root {
-      --bg-color: var(--tg-theme-bg-color, #fff);
-      --text-color: var(--tg-theme-text-color, #000);
-      --button-color: var(--tg-theme-button-color, #3390ec);
-      --button-text: var(--tg-theme-button-text-color, #fff);
-      --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
-    }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      padding: 16px;
+    body { 
+      margin: 0; 
+      font-family: sans-serif; 
+      background: var(--tg-theme-bg-color, #fff); 
+      color: var(--tg-theme-text-color, #000); 
+      padding: 16px; 
     }
     .container { max-width: 480px; margin: 0 auto; }
-    .profile-header {
-      text-align: center;
-      padding: 20px 0;
-      border-bottom: 1px solid var(--secondary-bg);
-      margin-bottom: 24px;
-    }
-    .level-badge {
-      display: inline-block;
-      background: var(--button-color);
-      color: var(--button-text);
-      padding: 4px 16px;
-      border-radius: 20px;
-      font-weight: bold;
-      margin-top: 8px;
-    }
-    .main-menu { display: flex; flex-direction: column; gap: 10px; }
     .menu-btn {
       display: block;
       padding: 14px 16px;
-      background: var(--secondary-bg);
-      color: var(--text-color);
+      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+      color: var(--tg-theme-text-color, #000);
       text-decoration: none;
       border-radius: 10px;
+      margin: 8px 0;
       font-weight: 500;
     }
     .menu-btn.active {
-      background: var(--button-color);
-      color: var(--button-text);
+      background: var(--tg-theme-button-color, #3390ec);
+      color: var(--tg-theme-button-text-color, #fff);
     }
-    .secondary-btn {
-      margin-top: 24px;
-      width: 100%;
+    .debug {
+      margin-top: 20px;
       padding: 12px;
-      background: transparent;
-      border: 1px solid var(--button-color);
-      color: var(--button-color);
+      background: #f5f5f5;
       border-radius: 8px;
-      cursor: pointer;
+      font-size: 12px;
+      font-family: monospace;
+      white-space: pre-wrap;
     }
-    .delete-btn {
-      margin-top: 16px;
-      width: 100%;
-      padding: 12px;
-      background: #e53935;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .delete-btn:hover { background: #b71c1c; }
-    .loading { text-align: center; padding: 50px; color: #666; }
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 1000;
-    }
-    .modal {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: var(--bg-color);
-      padding: 24px;
-      border-radius: 12px;
-      max-width: 320px;
-      width: 90%;
-      text-align: center;
-    }
-    .modal h3 { margin-top: 0; color: #e53935; }
-    .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-    .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
-    .modal-btn-cancel { background: var(--secondary-bg); color: var(--text-color); }
-    .modal-btn-confirm { background: #e53935; color: #fff; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="loading" class="loading">Загрузка профиля...</div>
-    <div id="profile-content" style="display: none;">
-      <div class="profile-header">
-        <h2 id="profile-nickname">Loading...</h2>
-        <p>Уровень станции:</p>
-        <div class="level-badge" id="profile-level">--</div>
-      </div>
-      <nav class="main-menu">
-        <a href="schedule.html" class="menu-btn">📅 Расписание</a>
-        <a href="profile.html" class="menu-btn active">👤 Профиль</a>
-        <a href="news.html" class="menu-btn">📰 Новости</a>
-        <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
-        <a href="channels.html" class="menu-btn">📢 Каналы</a>
-        <a href="support.html" class="menu-btn">❓ Поддержка</a>
-      </nav>
-      <button id="logout-btn" class="secondary-btn">Выйти</button>
-      <button id="delete-account-btn" class="delete-btn">🗑️ Удалить аккаунт</button>
-    </div>
+    <h2>✅ Профиль загружен!</h2>
+    
+    <nav class="main-menu">
+      <a href="schedule.html" class="menu-btn">📅 Расписание</a>
+      <a href="profile.html" class="menu-btn active">👤 Профиль</a>
+      <a href="news.html" class="menu-btn">📰 Новости</a>
+      <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
+      <a href="channels.html" class="menu-btn">📢 Каналы</a>
+      <a href="support.html" class="menu-btn">❓ Поддержка</a>
+    </nav>
+    
+    <div id="debug" class="debug">Загрузка...</div>
   </div>
 
-  <div id="delete-modal" class="modal-overlay">
-    <div class="modal">
-      <h3>⚠️ Удаление аккаунта</h3>
-      <p>Вы уверены? Все данные будут удалены безвозвратно.</p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" id="cancel-delete">Отмена</button>
-        <button class="modal-btn modal-btn-confirm" id="confirm-delete">Удалить</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Firebase SDK (без пробелов в URL!) -->
+  <!-- ✅ Firebase SDK (чистые URL) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="config.js"></script>
-  <script src="js/api.js"></script>
   
   <script>
-    console.log('🔹 Profile script started');
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    async function deleteUserLocal(telegramId) {
-      try {
-        if (typeof firebase === 'undefined' || !firebase.apps.length) return false;
-        const db = firebase.firestore();
-        await db.collection('users').doc(String(telegramId)).delete();
-        return true;
-      } catch (error) {
-        console.error('❌ Delete error:', error);
-        return false;
-      }
+    const debug = document.getElementById('debug');
+    const logs = [];
+    
+    function log(msg) {
+      logs.push(msg);
+      debug.textContent = logs.join('\n');
+      console.log(msg);
     }
-
-    window.addEventListener('load', async () => {
-      const telegramId = tg.initDataUnsafe?.user?.id;
-      if (!telegramId) {
-        document.getElementById('loading').textContent = '❌ Ошибка: нет данных Telegram';
-        return;
-      }
-      
-      let user = null;
-      if (typeof window.getUser === 'function') {
-        user = await window.getUser(telegramId);
-      } else {
-        const cached = localStorage.getItem('tma_user');
-        user = cached ? JSON.parse(cached) : null;
-      }
-      
-      if (user) {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('profile-content').style.display = 'block';
-        document.getElementById('profile-nickname').textContent = user.nickname;
-        document.getElementById('profile-level').textContent = user.level;
-        setupButtons(telegramId);
-      } else {
-        window.location.href = 'index.html';
-      }
-    });
-
-    function setupButtons(telegramId) {
-      const logoutBtn = document.getElementById('logout-btn');
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-          localStorage.removeItem('tma_user');
-          window.location.href = 'index.html';
-        });
-      }
-
-      const deleteBtn = document.getElementById('delete-account-btn');
-      const modal = document.getElementById('delete-modal');
-      const cancelBtn = document.getElementById('cancel-delete');
-      const confirmBtn = document.getElementById('confirm-delete');
-
-      if (!deleteBtn || !modal || !confirmBtn) return;
-
-      deleteBtn.addEventListener('click', () => { modal.style.display = 'block'; });
-      cancelBtn.addEventListener('click', () => { modal.style.display = 'none';
+    
+    log('🔹 Script started');
+    log('🔹 Telegram: ' + (typeof Telegram));
+    log('🔹 firebase: ' + (typeof firebase));
+    
+    if (typeof Telegram !== 'undefined') {
+      const tg = Telegram.WebApp;
+      tg.expand();
+      log('✅ Telegram WebApp initialized');
+      log('🔹 User ID: ' + (tg.initDataUnsafe?.user?.id || 'not available'));
+    } else {
+      log('❌ Telegram SDK failed to load');
+    }
+    
+    if (typeof firebase !== 'undefined') {
+      log('✅ Firebase SDK loaded');
+    } else {
+      log('❌ Firebase SDK failed to load');
+    }
+    
+    const menuBtn = document.querySelector('.menu-btn');
+    log('🔹 .menu-btn found: ' + (menuBtn ? 'YES' : 'NO'));
+    
+    if (menuBtn) {
+      const style = getComputedStyle(menuBtn);
+      log('🔹 Button background: ' + style.background);
+    }
+    
+    log('🏁 Done');
+  </script>
+</body>
+</html>
