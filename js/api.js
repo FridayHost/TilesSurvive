@@ -11,6 +11,12 @@ if (typeof firebase === 'undefined') {
   window.getUser = async (id) => {
     return JSON.parse(localStorage.getItem('tma_user'));
   };
+  
+  window.deleteUser = async (id) => {
+    console.log('⚠️ Mock delete (Firebase not loaded):', id);
+    localStorage.removeItem('tma_user');
+    return true;
+  };
 } else {
   console.log('🔥 Firebase SDK loaded, initializing...');
   
@@ -41,6 +47,18 @@ if (typeof firebase === 'undefined') {
       } catch (error) {
         console.error('❌ Firestore get error:', error);
         return null;
+      }
+    };
+    
+    // ✅ Удалить пользователя
+    window.deleteUser = async (telegramId) => {
+      try {
+        await db.collection('users').doc(String(telegramId)).delete();
+        console.log('✅ User deleted from Firestore:', telegramId);
+        return true;
+      } catch (error) {
+        console.error('❌ Firestore delete error:', error);
+        return false;
       }
     };
   } catch (err) {
