@@ -5,7 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile Test</title>
   <!-- ✅ Чистые URL без пробелов -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="window.addEventListener('load', async () => {
+  const telegramId = tg.initDataUnsafe?.user?.id;
+  
+  // 🔴 Если нет Telegram ID — показываем понятную ошибку
+  if (!telegramId) {
+    console.warn('⚠️ User ID not available - app opened outside Telegram?');
+    document.getElementById('loading').innerHTML = `
+      <div style="text-align:center;padding:20px;">
+        <p>❌ Приложение должно открываться через Telegram</p>
+        <p style="font-size:12px;color:#666;">
+          Откройте бота → нажмите кнопку меню слева от поля ввода
+        </p>
+        <button onclick="window.location.href='index.html'" 
+                style="padding:10px 20px;background:#3390ec;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+          Попробовать снова
+        </button>
+      </div>
+    `;
+    return;
+  }
+  
+  // ... остальной код загрузки профиля
+});"></script>
   
   <style>
     body { 
@@ -102,3 +124,4 @@
   </script>
 </body>
 </html>
+
