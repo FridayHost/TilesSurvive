@@ -1,78 +1,74 @@
-// js/api.js
+// js/api.js - Firebase API функции
 
-// 🔴 ВАЖНО: Сразу создаем заглушки, чтобы не было ошибки "not defined"
+console.log('🔹 api.js loaded');
+
+// Заглушки по умолчанию
 window.saveUser = async (data) => {
-  console.error('❌ saveUser: Firebase not initialized');
+  console.warn('⚠️ saveUser: Firebase not initialized');
   return false;
 };
 
 window.getUser = async (id) => {
-  console.error('❌ getUser: Firebase not initialized');
+  console.warn('⚠️ getUser: Firebase not initialized');
   return null;
 };
 
 window.deleteUser = async (id) => {
-  console.error('❌ deleteUser: Firebase not initialized');
+  console.warn('⚠️ deleteUser: Firebase not initialized');
   return false;
 };
 
-// Проверяем, что Firebase загружен
+// Проверка Firebase
 if (typeof firebase === 'undefined') {
-  console.error('❌ Firebase SDK not loaded! Check index.html script order');
+  console.error('❌ Firebase SDK not loaded');
 } else {
-  console.log('🔥 Firebase SDK found, initializing...');
-  
+  console.log('🔥 Firebase SDK found');
+
   try {
-    // Инициализируем Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    console.log('✅ Firebase initialized successfully');
-    
-    // ✅ Сохранить пользователя
+    console.log('✅ Firebase initialized');
+
+    // Сохранить пользователя
     window.saveUser = async (userData) => {
       try {
         await db.collection('users').doc(String(userData.telegram_id)).set(userData);
-        console.log('✅ User saved to Firestore');
+        console.log('✅ User saved:', userData.telegram_id);
         return true;
       } catch (error) {
-        console.error('❌ Firestore save error:', error);
+        console.error('❌ Save error:', error);
         return false;
       }
     };
-    
-    // ✅ Получить пользователя
+
+    // Получить пользователя
     window.getUser = async (telegramId) => {
       try {
         const doc = await db.collection('users').doc(String(telegramId)).get();
         const data = doc.exists ? doc.data() : null;
-        console.log('📥 User data:', data);
+        console.log('📥 User loaded:', telegramId, data ? 'found' : 'not found');
         return data;
       } catch (error) {
-        console.error('❌ Firestore get error:', error);
+        console.error('❌ Get error:', error);
         return null;
       }
     };
-    
-    // ✅ Удалить пользователя
+
+    // Удалить пользователя
     window.deleteUser = async (telegramId) => {
       try {
-        console.log('🗑️ Deleting user:', telegramId);
         await db.collection('users').doc(String(telegramId)).delete();
-        console.log('✅ User deleted from Firestore');
+        console.log('🗑️ User deleted:', telegramId);
         return true;
       } catch (error) {
-        console.error('❌ Firestore delete error:', error);
+        console.error('❌ Delete error:', error);
         return false;
       }
     };
-    
+
   } catch (err) {
     console.error('❌ Firebase init error:', err);
   }
 }
 
-console.log('🏁 api.js loaded, functions available:', {
-  saveUser: typeof window.saveUser,
-  getUser: typeof window.getUser,
-  deleteUser: typeof window.deleteUser
-});
+console.log('🏁 api.js functions ready');
