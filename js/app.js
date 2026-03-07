@@ -1,37 +1,39 @@
+// js/app.js - Основная логика приложения
+
+console.log('🔹 app.js loaded');
+
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-console.log('🚀 App started, User ID:', tg.initDataUnsafe?.user?.id);
-
-// ... (ваши переводы translations остаются без изменений) ...
+// Переводы
 const translations = {
   ru: {
-    register_title: "Регистрация",
-    label_nickname: "Никнейм",
-    label_union: "Союз",
-    label_state: "Штат",
-    label_level: "Уровень электростанции (1-30)",
-    btn_register: "Зарегистрироваться",
-    error_required: "Заполните все поля",
-    error_level: "Уровень должен быть от 1 до 30",
-    error_save: "Ошибка сохранения. Попробуйте позже."
+    title: 'Регистрация',
+    label_nickname: 'Никнейм',
+    label_union: 'Союз',
+    label_state: 'Штат',
+    label_level: 'Уровень электростанции (1-30)',
+    btn_register: 'Зарегистрироваться',
+    error_required: 'Заполните все поля',
+    error_level: 'Уровень должен быть от 1 до 30',
+    error_save: 'Ошибка сохранения'
   },
   en: {
-    register_title: "Registration",
-    label_nickname: "Nickname",
-    label_union: "Union",
-    label_state: "State",
-    label_level: "Power Plant Level (1-30)",
-    btn_register: "Register",
-    error_required: "Fill in all fields",
-    error_level: "Level must be between 1 and 30",
-    error_save: "Save error. Try later."
+    title: 'Registration',
+    label_nickname: 'Nickname',
+    label_union: 'Union',
+    label_state: 'State',
+    label_level: 'Power Plant Level (1-30)',
+    btn_register: 'Register',
+    error_required: 'Fill in all fields',
+    error_level: 'Level must be 1-30',
+    error_save: 'Save error'
   }
 };
 
 let currentLang = 'ru';
 
-// ... (функции applyTranslations, updateLangButtons остаются без изменений) ...
+// Применение переводов
 function applyTranslations() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
@@ -39,6 +41,12 @@ function applyTranslations() {
       el.textContent = translations[currentLang][key];
     }
   });
+}
+
+// Переключение языка
+function updateLangButtons() {
+  document.getElementById('lang-ru')?.classList.toggle('active', currentLang === 'ru');
+  document.getElementById('lang-en')?.classList.toggle('active', currentLang === 'en');
 }
 
 document.getElementById('lang-ru')?.addEventListener('click', () => {
@@ -53,66 +61,51 @@ document.getElementById('lang-en')?.addEventListener('click', () => {
   applyTranslations();
 });
 
-function updateLangButtons() {
-  document.getElementById('lang-ru')?.classList.toggle('active', currentLang === 'ru');
-  document.getElementById('lang-en')?.classList.toggle('active', currentLang === 'en');
-}
-
-// ✅ ГЛАВНОЕ: Проверка при загрузке страницы
+// Проверка при загрузке
 window.addEventListener('load', async () => {
   const telegramId = tg.initDataUnsafe?.user?.id;
-  
+
   if (!telegramId) {
-    console.error('❌ Telegram ID not available');
-    showError('Ошибка: не удалось получить данные Telegram');
+    console.warn('⚠️ No Telegram ID');
     return;
   }
-  
-  console.log('🔍 Checking if user exists:', telegramId);
-  
-  // Проверяем в Firebase
-  if (typeof getUser === 'function') {
-    const existingUser = await getUser(telegramId);
-    
+
+  // Если пользователь уже зарегистрирован — редирект в профиль
+  if (typeof window.getUser === 'function') {
+    const existingUser = await window.getUser(telegramId);
     if (existingUser) {
-      console.log('✅ User found, redirecting to profile...');
-      // Пользователь уже зарегистрирован — сразу в профиль
+      console.log('✅ User exists, redirecting to profile');
       window.location.href = 'profile.html';
       return;
     }
   }
-  
-  console.log('📝 New user, showing registration form');
-  // Пользователь новый — оставляем на странице регистрации
+
+  console.log('📝 New user, showing registration');
   applyTranslations();
 });
 
-// Обработка регистрации
+// Обработка формы
 document.getElementById('register-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  console.log('📝 Form submitted');
-  
-  const nickname = document.getElementById('nickname').value.trim();
-  const union = document.getElementById('union').value.trim();
-  const state = document.getElementById('state').value.trim();
-  const level = parseInt(document.getElementById('level').value);
+
+  const nickname = document.getElementById('nickname')?.value.trim();
+  const union = document.getElementById('union')?.value.trim();
+  const state = document.getElementById('state')?.value.trim();
+  const level = parseInt(document.getElementById('level')?.value);
   const telegramId = tg.initDataUnsafe?.user?.id;
-  
-  console.log('📥 Data:', { nickname, union, state, level, telegramId });
-  
+  const errorMsg = document.getElementById('error-msg');
+
   // Валидация
   if (!nickname || !union || !state || !level) {
-    console.error('❌ Validation failed: empty fields');
-    showError(translations[currentLang].error_required);
+    showError(translations[currentLang].error_required, errorMsg);
     return;
   }
+
   if (level < 1 || level > 30) {
-    console.error('❌ Validation failed: wrong level');
-    showError(translations[currentLang].error_level);
+    showError(translations[currentLang].error_level, errorMsg);
     return;
   }
-  
+
   const userData = {
     telegram_id: telegramId,
     nickname,
@@ -122,43 +115,34 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
     language: currentLang,
     registered_at: new Date().toISOString()
   };
-  
-  console.log('💾 Trying to save user...');
-  
-  if (typeof saveUser !== 'function') {
-    console.error('❌ saveUser function not found! Check api.js loading');
-    showError('System error: saveUser not found');
+
+  console.log('💾 Saving user:', userData);
+
+  if (typeof window.saveUser !== 'function') {
+    showError('System error', errorMsg);
     return;
   }
-  
+
   try {
-    const success = await saveUser(userData);
-    console.log('💾 Save result:', success);
-    
+    const success = await window.saveUser(userData);
     if (success) {
-      console.log('✅ Success! Redirecting...');
       localStorage.setItem('tma_user', JSON.stringify(userData));
-      
-      setTimeout(() => {
-        window.location.href = 'profile.html';
-      }, 500);
+      console.log('✅ Registration complete');
+      window.location.href = 'profile.html';
     } else {
-      showError(translations[currentLang].error_save);
+      showError(translations[currentLang].error_save, errorMsg);
     }
   } catch (err) {
-    console.error('❌ Exception during save:', err);
-    showError('Error: ' + err.message);
+    console.error('❌ Registration error:', err);
+    showError('Error: ' + err.message, errorMsg);
   }
 });
 
-function showError(msg) {
-  const el = document.getElementById('error-msg');
-  if (el) {
-    el.textContent = msg;
-    el.style.display = 'block';
-    console.error('🔴 Error shown:', msg);
+function showError(msg, element) {
+  if (element) {
+    element.textContent = msg;
+    element.classList.add('visible');
   }
 }
 
-applyTranslations();
-console.log('✅ App initialized');
+console.log('🏁 app.js ready');
