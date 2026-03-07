@@ -2,126 +2,153 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile Test</title>
-  <!-- ✅ Чистые URL без пробелов -->
-  <script src="window.addEventListener('load', async () => {
-  const telegramId = tg.initDataUnsafe?.user?.id;
-  
-  // 🔴 Если нет Telegram ID — показываем понятную ошибку
-  if (!telegramId) {
-    console.warn('⚠️ User ID not available - app opened outside Telegram?');
-    document.getElementById('loading').innerHTML = `
-      <div style="text-align:center;padding:20px;">
-        <p>❌ Приложение должно открываться через Telegram</p>
-        <p style="font-size:12px;color:#666;">
-          Откройте бота → нажмите кнопку меню слева от поля ввода
-        </p>
-        <button onclick="window.location.href='index.html'" 
-                style="padding:10px 20px;background:#3390ec;color:#fff;border:none;border-radius:8px;cursor:pointer;">
-          Попробовать снова
-        </button>
-      </div>
-    `;
-    return;
-  }
-  
-  // ... остальной код загрузки профиля
-});"></script>
-  
-  <style>
-    body { 
-      margin: 0; 
-      font-family: sans-serif; 
-      background: var(--tg-theme-bg-color, #fff); 
-      color: var(--tg-theme-text-color, #000); 
-      padding: 16px; 
-    }
-    .container { max-width: 480px; margin: 0 auto; }
-    .menu-btn {
-      display: block;
-      padding: 14px 16px;
-      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-      color: var(--tg-theme-text-color, #000);
-      text-decoration: none;
-      border-radius: 10px;
-      margin: 8px 0;
-      font-weight: 500;
-    }
-    .menu-btn.active {
-      background: var(--tg-theme-button-color, #3390ec);
-      color: var(--tg-theme-button-text-color, #fff);
-    }
-    .debug {
-      margin-top: 20px;
-      padding: 12px;
-      background: #f5f5f5;
-      border-radius: 8px;
-      font-size: 12px;
-      font-family: monospace;
-      white-space: pre-wrap;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Profile</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="container">
-    <h2>✅ Профиль загружен!</h2>
-    
-    <nav class="main-menu">
-      <a href="schedule.html" class="menu-btn">📅 Расписание</a>
-      <a href="profile.html" class="menu-btn active">👤 Профиль</a>
-      <a href="news.html" class="menu-btn">📰 Новости</a>
-      <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
-      <a href="channels.html" class="menu-btn">📢 Каналы</a>
-      <a href="support.html" class="menu-btn">❓ Поддержка</a>
-    </nav>
-    
-    <div id="debug" class="debug">Загрузка...</div>
+    <div class="loading" id="loading">Загрузка профиля...</div>
+
+    <div id="profile-content" style="display: none;">
+      <div class="profile-header">
+        <h2 id="profile-nickname">Loading...</h2>
+        <p>Уровень станции:</p>
+        <div class="level-badge" id="profile-level">--</div>
+      </div>
+
+      <nav class="main-menu">
+        <a href="schedule.html" class="menu-btn">📅 Расписание</a>
+        <a href="profile.html" class="menu-btn active">👤 Профиль</a>
+        <a href="news.html" class="menu-btn">📰 Новости</a>
+        <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
+        <a href="channels.html" class="menu-btn">📢 Каналы</a>
+        <a href="support.html" class="menu-btn">❓ Поддержка</a>
+      </nav>
+
+      <button class="secondary-btn" id="logout-btn">Выйти</button>
+      <button class="delete-btn" id="delete-account-btn">🗑️ Удалить аккаунт</button>
+    </div>
   </div>
 
-  <!-- ✅ Firebase SDK (чистые URL) -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+      <h3>⚠️ Удаление аккаунта</h3>
+      <p>Вы уверены? Все данные будут удалены безвозвратно.</p>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" id="cancel-delete">Отмена</button>
+        <button class="modal-btn modal-btn-confirm" id="confirm-delete">Удалить</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  
+  <script src="config.js"></script>
+  <script src="js/api.js"></script>
   <script>
-    const debug = document.getElementById('debug');
-    const logs = [];
-    
-    function log(msg) {
-      logs.push(msg);
-      debug.textContent = logs.join('\n');
-      console.log(msg);
+    console.log('🔹 Profile script started');
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // Локальная функция удаления (резервная)
+    async function deleteUserLocal(telegramId) {
+      try {
+        if (typeof firebase === 'undefined' || !firebase.apps.length) {
+          console.warn('⚠️ Firebase not initialized, using mock delete');
+          return true;
+        }
+        const db = firebase.firestore();
+        await db.collection('users').doc(String(telegramId)).delete();
+        console.log('✅ User deleted from Firestore');
+        return true;
+      } catch (error) {
+        console.error('❌ Delete error:', error);
+        return false;
+      }
     }
-    
-    log('🔹 Script started');
-    log('🔹 Telegram: ' + (typeof Telegram));
-    log('🔹 firebase: ' + (typeof firebase));
-    
-    if (typeof Telegram !== 'undefined') {
-      const tg = Telegram.WebApp;
-      tg.expand();
-      log('✅ Telegram WebApp initialized');
-      log('🔹 User ID: ' + (tg.initDataUnsafe?.user?.id || 'not available'));
-    } else {
-      log('❌ Telegram SDK failed to load');
+
+    window.addEventListener('load', async () => {
+      const telegramId = tg.initDataUnsafe?.user?.id;
+
+      if (!telegramId) {
+        document.getElementById('loading').textContent = '❌ Откройте через Telegram';
+        return;
+      }
+
+      let user = null;
+      if (typeof window.getUser === 'function') {
+        user = await window.getUser(telegramId);
+      }
+      if (!user) {
+        user = JSON.parse(localStorage.getItem('tma_user') || 'null');
+      }
+
+      if (user) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('profile-content').style.display = 'block';
+        document.getElementById('profile-nickname').textContent = user.nickname;
+        document.getElementById('profile-level').textContent = user.level;
+        setupButtons(telegramId);
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+
+    function setupButtons(telegramId) {
+      // Кнопка выхода
+      document.getElementById('logout-btn')?.addEventListener('click', () => {
+        localStorage.removeItem('tma_user');
+        window.location.href = 'index.html';
+      });
+
+      // Кнопка удаления
+      const deleteBtn = document.getElementById('delete-account-btn');
+      const modal = document.getElementById('delete-modal');
+      const cancelBtn = document.getElementById('cancel-delete');
+      const confirmBtn = document.getElementById('confirm-delete');
+
+      deleteBtn?.addEventListener('click', () => {
+        modal.style.display = 'block';
+      });
+
+      cancelBtn?.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+
+      modal?.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+
+      confirmBtn?.addEventListener('click', async () => {
+        const deleteFunc = window.deleteUser || deleteUserLocal;
+
+        confirmBtn.textContent = 'Удаление...';
+        confirmBtn.disabled = true;
+
+        try {
+          const success = await deleteFunc(telegramId);
+          if (success) {
+            localStorage.removeItem('tma_user');
+            tg.showAlert('✅ Аккаунт удалён!');
+            window.location.href = 'index.html';
+          } else {
+            tg.showAlert('❌ Ошибка при удалении');
+            confirmBtn.textContent = 'Удалить';
+            confirmBtn.disabled = false;
+            modal.style.display = 'none';
+          }
+        } catch (err) {
+          tg.showAlert('Ошибка: ' + err.message);
+          confirmBtn.textContent = 'Удалить';
+          confirmBtn.disabled = false;
+          modal.style.display = 'none';
+        }
+      });
     }
-    
-    if (typeof firebase !== 'undefined') {
-      log('✅ Firebase SDK loaded');
-    } else {
-      log('❌ Firebase SDK failed to load');
-    }
-    
-    const menuBtn = document.querySelector('.menu-btn');
-    log('🔹 .menu-btn found: ' + (menuBtn ? 'YES' : 'NO'));
-    
-    if (menuBtn) {
-      const style = getComputedStyle(menuBtn);
-      log('🔹 Button background: ' + style.background);
-    }
-    
-    log('🏁 Done');
   </script>
 </body>
 </html>
-
