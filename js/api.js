@@ -78,3 +78,30 @@ if (typeof firebase === 'undefined') {
 }
 
 console.log('🏁 [API] Functions ready');
+
+// ✅ ЗАПИСАТЬ ПОСЕЩЕНИЕ
+window.logVisit = async (telegramId) => {
+  try {
+    const db = firebase.firestore();
+    const today = new Date().toISOString().split('T')[0]; // Дата в формате YYYY-MM-DD
+    
+    await db.collection('visits').doc(`${telegramId}_${today}`).set({
+      telegram_id: telegramId,
+      visit_date: today,
+      visited_at: new Date().toISOString()
+    });
+    
+    console.log('📊 Visit logged:', telegramId, today);
+    return true;
+  } catch (error) {
+    console.error('❌ Visit log error:', error);
+    return false;
+  }
+};
+
+console.log('🏁 api.js functions ready:', {
+  saveUser: typeof window.saveUser,
+  getUser: typeof window.getUser,
+  deleteUser: typeof window.deleteUser,
+  logVisit: typeof window.logVisit
+});
