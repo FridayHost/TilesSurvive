@@ -263,6 +263,12 @@
         return;
       }
 
+      // ✅ Записываем посещение
+  if (typeof window.logVisit === 'function') {
+    await window.logVisit(telegramId);
+    console.log('✅ Visit logged');
+  }
+
       let user = null;
       
       if (typeof window.getUser === 'function') {
@@ -366,4 +372,5 @@
   </script>
 </body>
 </html>
+
 
