@@ -331,3 +331,102 @@ input:focus {
 .back-btn:hover {
   opacity: 0.9;
 }
+
+/* ===== АДМИН-ПАНЕЛЬ ===== */
+.admin-header {
+  text-align: center;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--secondary-bg);
+  margin-bottom: 20px;
+}
+.admin-header h1 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: #e53935;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  padding: 16px;
+  background: var(--secondary-bg);
+  border-radius: 12px;
+  text-align: center;
+}
+.stat-card .value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--button-color);
+  margin-bottom: 4px;
+}
+.stat-card .label {
+  font-size: 12px;
+  color: var(--hint-color);
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px;
+  background: var(--secondary-bg);
+  color: var(--text-color);
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.tab-btn.active {
+  background: var(--button-color);
+  color: var(--button-text);
+}
+.user-card, .deleted-card {
+  padding: 14px;
+  background: var(--secondary-bg);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.user-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.user-nickname {
+  font-weight: 600;
+  font-size: 15px;
+}
+.user-id {
+  font-size: 11px;
+  color: var(--hint-color);
+  background: rgba(0,0,0,0.08);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.user-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  font-size: 13px;
+}
+.user-detail-item {
+  color: var(--hint-color);
+}
+.user-detail-item strong {
+  color: var(--text-color);
+}
+.deleted-badge {
+  background: #e53935;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
