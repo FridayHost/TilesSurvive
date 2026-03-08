@@ -2,20 +2,531 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Page Title</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Расписание</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .schedule-header {
+      margin-bottom: 20px;
+    }
+    
+    .day-selector {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 8px 0;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    
+    .day-selector::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .day-btn {
+      flex: 0 0 auto;
+      padding: 10px 16px;
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    
+    .day-btn.active {
+      background: var(--button-color);
+      color: var(--button-text);
+    }
+    
+    .schedule-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .time-block {
+      background: var(--secondary-bg);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    
+    .time-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--button-color);
+    }
+    
+    .event-item {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .event-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    
+    .event-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 8px;
+      color: var(--text-color);
+    }
+    
+    .event-modes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    
+    .mode-tag {
+      padding: 4px 10px;
+      background: rgba(51, 144, 236, 0.1);
+      color: var(--button-color);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .mode-tag.duel {
+      background: rgba(223, 63, 64, 0.1);
+      color: #df3f40;
+    }
+    
+    .mode-tag.game {
+      background: rgba(255, 193, 7, 0.1);
+      color: #ffa000;
+    }
+    
+    .mode-tag.turtle {
+      background: rgba(76, 175, 80, 0.1);
+      color: #43a047;
+    }
+    
+    .intersection-note {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.03);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--hint-color);
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>Название страницы</h1>
-    <p>Контент страницы...</p>
-    
-    <a href="profile.html" class="menu-btn">← Назад в профиль</a>
+    <div class="schedule-header">
+      <h1 style="margin-bottom: 16px;">📅 Расписание</h1>
+      <div class="day-selector" id="day-selector">
+        <button class="day-btn" data-day="1">Пн</button>
+        <button class="day-btn" data-day="2">Вт</button>
+        <button class="day-btn" data-day="3">Ср</button>
+        <button class="day-btn" data-day="4">Чт</button>
+        <button class="day-btn" data-day="5">Пт</button>
+        <button class="day-btn" data-day="6">Сб</button>
+        <button class="day-btn" data-day="0">Вс</button>
+      </div>
+    </div>
+
+    <div class="schedule-content" id="schedule-content">
+      <!-- Content will be loaded here -->
+    </div>
+
+    <a href="profile.html" class="back-btn" style="display: inline-block; margin-top: 20px; padding: 12px 20px; background: var(--secondary-bg); color: var(--text-color); text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 500;">← Назад в профиль</a>
   </div>
+
   <script>
-    window.Telegram.WebApp.expand();
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // Schedule data
+    const scheduleData = {
+      1: { // Monday
+        blocks: [
+          {
+            time: "15:00-19:00 МСК",
+            events: [
+              {
+                title: "⏰ Исследования — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"]
+              },
+              {
+                title: "⏰ 19:00-23:00 МСК",
+                events: [
+                  {
+                    title: "Усиление снаряжения — действие засчитается сразу в нескольких ивентах",
+                    modes: []
+                  },
+                  {
+                    title: "⚔️ Дуэль союзов",
+                    modes: ["duel"]
+                  },
+                  {
+                    title: "🎰 Игра по-крупному",
+                    modes: ["game"]
+                  },
+                  {
+                    title: "🐢 Турбочерепаха",
+                    modes: ["turtle"]
+                  }
+                ]
+              },
+              {
+                title: "Алмазы — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "turtle"],
+                note: "Алмазы пересекается в режимах: Дуэль союзов, Турбочерепаха"
+              }
+            ]
+          }
+        ]
+      },
+      2: { // Tuesday
+        blocks: [
+          {
+            time: "03:00-07:00 МСК",
+            events: [
+              {
+                title: "Строительство — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "game", "turtle"],
+                note: "Строительство пересекается в режимах: Дуэль союзов, Игра по-крупному, Турбочерепаха в 03:00-07:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "15:00-19:00 МСК",
+            events: [
+              {
+                title: "Усиление снаряжения — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"],
+                note: "Усиление снаряжения пересекается в режимах: Игра по-крупному, Турбочерепаха в 15:00-19:00 МСК"
+              },
+              {
+                title: "Алмазы — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "turtle"]
+              }
+            ]
+          }
+        ]
+      },
+      3: { // Wednesday
+        blocks: [
+          {
+            time: "07:00-11:00 МСК",
+            events: [
+              {
+                title: "Исследования — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "game", "turtle"],
+                note: "Исследования пересекается в режимах: Дуэль союзов, Игра по-крупному, Турбочерепаха в 07:00-11:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "15:00-19:00 МСК",
+            events: [
+              {
+                title: "Титан — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "game", "turtle"],
+                note: "Титан пересекается в режимах: Дуэль союзов, Игра по-крупному, Турбочерепаха в 15:00-19:00 МСК"
+              },
+              {
+                title: "Алмазы — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "turtle"]
+              }
+            ]
+          }
+        ]
+      },
+      4: { // Thursday
+        blocks: [
+          {
+            time: "15:00-19:00 МСК",
+            events: [
+              {
+                title: "Улучшение героя — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "duel", "turtle"],
+                note: "Улучшение героя пересекается в режимах: Игра по-крупному, Дуэль союзов, Турбочерепаха в 15:00-19:00 МСК"
+              },
+              {
+                title: "Алмазы — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "turtle"],
+                note: "Алмазы пересекается в режимах: Дуэль союзов, Турбочерепаха"
+              },
+              {
+                title: "Призыв — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "turtle"]
+              }
+            ]
+          }
+        ]
+      },
+      5: { // Friday
+        blocks: [
+          {
+            time: "03:00-07:00 МСК",
+            events: [
+              {
+                title: "Усиление снаряжения — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"],
+                note: "Усиление снаряжения пересекается в режимах: Игра по-крупному, Турбочерепаха в 03:00-07:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "15:00-19:00 МСК",
+            events: [
+              {
+                title: "Строительство — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "game", "turtle"],
+                note: "Строительство пересекается в режимах: Дуэль союзов, Игра по-крупному, Турбочерепаха в 15:00-19:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "19:00-23:00 МСК",
+            events: [
+              {
+                title: "Шеф Коллекция — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"]
+              }
+            ]
+          },
+          {
+            time: "23:00-03:00 МСК",
+            events: [
+              {
+                title: "Исследования — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "game", "turtle"],
+                note: "Исследования пересекается в режимах: Дуэль союзов, Игра по-крупному, Турбочерепаха в 23:00-03:00 МСК"
+              },
+              {
+                title: "Алмазы — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "turtle"],
+                note: "Алмазы пересекается в режимах: Дуэль союзов, Турбочерепаха"
+              },
+              {
+                title: "Обучение войск — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "turtle"]
+              }
+            ]
+          }
+        ]
+      },
+      6: { // Saturday
+        blocks: [
+          {
+            time: "03:00-07:00 МСК",
+            events: [
+              {
+                title: "Титан — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"],
+                note: "Титан пересекается в режимах: Игра по-крупному, Турбочерепаха в 03:00-07:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "07:00-11:00 МСК",
+            events: [
+              {
+                title: "Улучшение героя — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"],
+                note: "Улучшение героя пересекается в режимах: Игра по-крупному, Турбочерепаха в 07:00-11:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "11:00-15:00 МСК",
+            events: [
+              {
+                title: "Строительство — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "game", "turtle"],
+                note: "Строительство пересекается в режимах: Дуэль союзов, Игра по-крупному, Турбочерепаха в 11:00-15:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "19:00-23:00 МСК",
+            events: [
+              {
+                title: "Исследования — действие засчитается сразу в нескольких ивентах",
+                modes: ["duel", "game", "turtle"]
+              }
+            ]
+          }
+        ]
+      },
+      0: { // Sunday
+        blocks: [
+          {
+            time: "03:00-07:00 МСК",
+            events: [
+              {
+                title: "Улучшение героя — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"],
+                note: "Улучшение героя пересекается в режимах: Игра по-крупному, Турбочерепаха в 03:00-07:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "07:00-11:00 МСК",
+            events: [
+              {
+                title: "Строительство — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"],
+                note: "Строительство пересекается в режимах: Игра по-крупному, Турбочерепаха в 07:00-11:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "11:00-15:00 МСК",
+            events: [
+              {
+                title: "Шеф Коллекция — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"],
+                note: "Шеф Коллекция пересекается в режимах: Игра по-крупному, Турбочерепаха в 11:00-15:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "15:00-19:00 МСК",
+            events: [
+              {
+                title: "Исследования — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"],
+                note: "Исследования пересекается в режимах: Игра по-крупному, Турбочерепаха в 15:00-19:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "19:00-23:00 МСК",
+            events: [
+              {
+                title: "Усиление снаряжения — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"],
+                note: "Усиление снаряжения пересекается в режимах: Игра по-крупному, Турбочерепаха в 19:00-23:00 МСК"
+              }
+            ]
+          },
+          {
+            time: "23:00-03:00 МСК",
+            events: [
+              {
+                title: "Титан — действие засчитается сразу в нескольких ивентах",
+                modes: ["game", "turtle"]
+              }
+            ]
+          }
+        ]
+      }
+    };
+
+    // Get mode class
+    function getModeClass(mode) {
+      const modeMap = {
+        'duel': 'duel',
+        'game': 'game',
+        'turtle': 'turtle'
+      };
+      return modeMap[mode] || '';
+    }
+
+    // Get mode text
+    function getModeText(mode) {
+      const modeMap = {
+        'duel': '⚔️ Дуэль союзов',
+        'game': '🎰 Игра по-крупному',
+        'turtle': '🐢 Турбочерепаха'
+      };
+      return modeMap[mode] || mode;
+    }
+
+    // Render schedule for selected day
+    function renderSchedule(day) {
+      const content = document.getElementById('schedule-content');
+      const data = scheduleData[day];
+      
+      if (!data || !data.blocks) {
+        content.innerHTML = '<div class="time-block">Нет данных</div>';
+        return;
+      }
+
+      let html = '';
+      
+      data.blocks.forEach(block => {
+        html += `
+          <div class="time-block">
+            <div class="time-header">
+              <span>⏰</span>
+              <span>${block.time}</span>
+            </div>
+        `;
+        
+        block.events.forEach((event, index) => {
+          html += `
+            <div class="event-item">
+              <div class="event-title">${event.title}</div>
+          `;
+          
+          if (event.modes && event.modes.length > 0) {
+            html += '<div class="event-modes">';
+            event.modes.forEach(mode => {
+              html += `<span class="mode-tag ${getModeClass(mode)}">${getModeText(mode)}</span>`;
+            });
+            html += '</div>';
+          }
+          
+          if (event.note) {
+            html += `<div class="intersection-note">${event.note}</div>`;
+          }
+          
+          html += '</div>';
+        });
+        
+        html += '</div>';
+      });
+      
+      content.innerHTML = html;
+    }
+
+    // Set active day button
+    function setActiveDay(day) {
+      document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (parseInt(btn.dataset.day) === day) {
+          btn.classList.add('active');
+        }
+      });
+      renderSchedule(day);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Get current day of week (0 = Sunday, 1 = Monday, etc.)
+      const today = new Date().getDay();
+      
+      // Set active day
+      setActiveDay(today);
+      
+      // Add click handlers
+      document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const day = parseInt(btn.dataset.day);
+          setActiveDay(day);
+        });
+      });
+    });
   </script>
 </body>
 </html>
