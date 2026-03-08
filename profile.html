@@ -6,11 +6,74 @@
   <title>Profile</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    /* Стили для модального окна (чтобы точно работали) */
+    .modal-overlay {
+      display: none; /* Скрыто по умолчанию! */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      pointer-events: auto; /* Разрешаем клики */
+    }
+    
+    .modal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 320px;
+      padding: 24px;
+      background-color: var(--tg-theme-bg-color, #fff);
+      border-radius: 16px;
+      text-align: center;
+      z-index: 1001;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto; /* Гарантируем кликабельность */
+    }
+    
+    .modal-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .modal-btn-cancel {
+      background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+      color: var(--tg-theme-text-color, #000);
+    }
+    
+    .modal-btn-confirm {
+      background-color: #e53935;
+      color: #ffffff;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
+    <!-- Экран загрузки -->
     <div class="loading" id="loading">Загрузка профиля...</div>
 
+    <!-- Контент профиля (скрыт до загрузки) -->
     <div id="profile-content" style="display: none;">
       <div class="profile-header">
         <h2 id="profile-nickname">Loading...</h2>
@@ -19,68 +82,62 @@
       </div>
 
       <nav class="main-menu">
-  <a href="schedule.html" class="menu-btn">📅 Расписание</a>
-  <a href="profile.html" class="menu-btn active">👤 Профиль</a>
-  <a href="news.html" class="menu-btn">📰 Новости</a>
-  <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
-  <a href="channels.html" class="menu-btn">📢 Каналы</a>
-  <a href="support.html" class="menu-btn">❓ Поддержка</a>
-  <!-- Кнопка Админка (видна только админам) -->
-  <a href="admin.html" class="menu-btn" id="admin-btn" style="display: none;">🔐 Админка</a>
-</nav>
+        <a href="schedule.html" class="menu-btn">📅 Расписание</a>
+        <a href="profile.html" class="menu-btn active">👤 Профиль</a>
+        <a href="news.html" class="menu-btn">📰 Новости</a>
+        <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
+        <a href="channels.html" class="menu-btn">📢 Каналы</a>
+        <a href="support.html" class="menu-btn">❓ Поддержка</a>
+        <a href="admin.html" class="menu-btn" id="admin-btn" style="display: none;">🔐 Админка</a>
+      </nav>
 
       <button class="secondary-btn" id="logout-btn">Выйти</button>
       <button class="delete-btn" id="delete-account-btn">🗑️ Удалить аккаунт</button>
     </div>
   </div>
 
+  <!-- Модальное окно (скрыто по умолчанию через CSS) -->
   <div class="modal-overlay" id="delete-modal">
     <div class="modal">
       <h3>⚠️ Удаление аккаунта</h3>
       <p>Вы уверены? Все данные будут удалены безвозвратно.</p>
       <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" id="cancel-delete">Отмена</button>
-        <button class="modal-btn modal-btn-confirm" id="confirm-delete">Удалить</button>
+        <button type="button" class="modal-btn modal-btn-cancel" id="cancel-delete">Отмена</button>
+        <button type="button" class="modal-btn modal-btn-confirm" id="confirm-delete">Удалить</button>
       </div>
     </div>
   </div>
 
+  <!-- Подключение скриптов -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="config.js"></script>
   <script src="js/api.js"></script>
+  
   <script>
-    console.log('🔹 Profile script started');
+    console.log('🔹 [PROFILE] Script started');
     const tg = window.Telegram.WebApp;
     tg.expand();
+
+    const ADMIN_IDS = [1182017243, 332240305];
 
     // Локальная функция удаления (резервная)
     async function deleteUserLocal(telegramId) {
       try {
-        if (typeof firebase === 'undefined' || !firebase.apps.length) {
-          console.warn('⚠️ Firebase not initialized, using mock delete');
-          return true;
-        }
+        if (typeof firebase === 'undefined' || !firebase.apps.length) return false;
         const db = firebase.firestore();
         await db.collection('users').doc(String(telegramId)).delete();
-        console.log('✅ User deleted from Firestore');
         return true;
       } catch (error) {
-        console.error('❌ Delete error:', error);
+        console.error('❌ [PROFILE] Delete error:', error);
         return false;
       }
     }
 
     window.addEventListener('load', async () => {
+      console.log('🔹 [PROFILE] Window loaded');
+      
       const telegramId = tg.initDataUnsafe?.user?.id;
-
-  // Показываем кнопку админки только для разрешённых ID
-  const ADMIN_IDS = [1182017243, 332240305];
-  if (ADMIN_IDS.includes(telegramId)) {
-    document.getElementById('admin-btn').style.display = 'flex';
-  }
-});
-
       if (!telegramId) {
         document.getElementById('loading').textContent = '❌ Откройте через Telegram';
         return;
@@ -99,6 +156,12 @@
         document.getElementById('profile-content').style.display = 'block';
         document.getElementById('profile-nickname').textContent = user.nickname;
         document.getElementById('profile-level').textContent = user.level;
+        
+        // Показываем кнопку админки только для разрешённых ID
+        if (ADMIN_IDS.includes(telegramId)) {
+          document.getElementById('admin-btn').style.display = 'flex';
+        }
+        
         setupButtons(telegramId);
       } else {
         window.location.href = 'index.html';
@@ -106,35 +169,59 @@
     });
 
     function setupButtons(telegramId) {
-      // Кнопка выхода
-      document.getElementById('logout-btn')?.addEventListener('click', () => {
-        localStorage.removeItem('tma_user');
-        window.location.href = 'index.html';
-      });
+      console.log('🔹 [PROFILE] Setting up buttons...');
 
-      // Кнопка удаления
+      // 1. Кнопка выхода
+      const logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('tma_user');
+          window.location.href = 'index.html';
+        });
+      }
+
+      // 2. Кнопка удаления аккаунта
       const deleteBtn = document.getElementById('delete-account-btn');
       const modal = document.getElementById('delete-modal');
       const cancelBtn = document.getElementById('cancel-delete');
       const confirmBtn = document.getElementById('confirm-delete');
 
-      deleteBtn?.addEventListener('click', () => {
+      // Проверка наличия элементов
+      if (!deleteBtn || !modal || !cancelBtn || !confirmBtn) {
+        console.error('❌ [PROFILE] One of modal elements not found');
+        return;
+      }
+
+      // Открытие модального окна
+      deleteBtn.addEventListener('click', () => {
+        console.log('🔹 [PROFILE] Open delete modal');
         modal.style.display = 'block';
       });
 
-      cancelBtn?.addEventListener('click', () => {
+      // Закрытие (Отмена)
+      cancelBtn.addEventListener('click', () => {
+        console.log('🔹 [PROFILE] Cancel delete');
         modal.style.display = 'none';
       });
 
-      modal?.addEventListener('click', (e) => {
+      // Закрытие по клику вне окна
+      modal.addEventListener('click', (e) => {
         if (e.target === modal) {
           modal.style.display = 'none';
         }
       });
 
-      confirmBtn?.addEventListener('click', async () => {
+      // Подтверждение удаления
+      confirmBtn.addEventListener('click', async () => {
+        console.log('🔹 [PROFILE] Confirm delete clicked');
+        
         const deleteFunc = window.deleteUser || deleteUserLocal;
+        if (typeof deleteFunc !== 'function') {
+          tg.showAlert('❌ Ошибка: функция удаления не найдена');
+          return;
+        }
 
+        // Блокируем кнопку на время удаления
         confirmBtn.textContent = 'Удаление...';
         confirmBtn.disabled = true;
 
@@ -146,19 +233,20 @@
             window.location.href = 'index.html';
           } else {
             tg.showAlert('❌ Ошибка при удалении');
-            confirmBtn.textContent = 'Удалить';
-            confirmBtn.disabled = false;
-            modal.style.display = 'none';
+            resetConfirmButton();
           }
         } catch (err) {
           tg.showAlert('Ошибка: ' + err.message);
-          confirmBtn.textContent = 'Удалить';
-          confirmBtn.disabled = false;
-          modal.style.display = 'none';
+          resetConfirmButton();
         }
       });
+
+      function resetConfirmButton() {
+        confirmBtn.textContent = 'Удалить';
+        confirmBtn.disabled = false;
+        modal.style.display = 'none';
+      }
     }
   </script>
 </body>
 </html>
-
