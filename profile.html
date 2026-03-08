@@ -6,74 +6,11 @@
   <title>Profile</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="css/style.css">
-  
-  <style>
-    /* Стили для модального окна (чтобы точно работали) */
-    .modal-overlay {
-      display: none; /* Скрыто по умолчанию! */
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.6);
-      z-index: 1000;
-      pointer-events: auto; /* Разрешаем клики */
-    }
-    
-    .modal {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 320px;
-      padding: 24px;
-      background-color: var(--tg-theme-bg-color, #fff);
-      border-radius: 16px;
-      text-align: center;
-      z-index: 1001;
-    }
-    
-    .modal-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    
-    .modal-btn {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      pointer-events: auto; /* Гарантируем кликабельность */
-    }
-    
-    .modal-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
-    .modal-btn-cancel {
-      background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-      color: var(--tg-theme-text-color, #000);
-    }
-    
-    .modal-btn-confirm {
-      background-color: #e53935;
-      color: #ffffff;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
-    <!-- Экран загрузки -->
     <div class="loading" id="loading">Загрузка профиля...</div>
 
-    <!-- Контент профиля (скрыт до загрузки) -->
     <div id="profile-content" style="display: none;">
       <div class="profile-header">
         <h2 id="profile-nickname">Loading...</h2>
@@ -96,7 +33,6 @@
     </div>
   </div>
 
-  <!-- Модальное окно (скрыто по умолчанию через CSS) -->
   <div class="modal-overlay" id="delete-modal">
     <div class="modal">
       <h3>⚠️ Удаление аккаунта</h3>
@@ -108,10 +44,12 @@
     </div>
   </div>
 
-  <!-- Подключение скриптов -->
+  <!-- 1. Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <!-- 2. Конфиг -->
   <script src="config.js"></script>
+  <!-- 3. API -->
   <script src="js/api.js"></script>
   
   <script>
@@ -121,10 +59,11 @@
 
     const ADMIN_IDS = [1182017243, 332240305];
 
-    // Локальная функция удаления (резервная)
     async function deleteUserLocal(telegramId) {
       try {
-        if (typeof firebase === 'undefined' || !firebase.apps.length) return false;
+        if (typeof firebase === 'undefined' || !firebase.apps.length) {
+          return false;
+        }
         const db = firebase.firestore();
         await db.collection('users').doc(String(telegramId)).delete();
         return true;
@@ -134,7 +73,7 @@
       }
     }
 
-    window.addEventListener('load', async () => {
+    window.addEventListener('load', async function() {
       console.log('🔹 [PROFILE] Window loaded');
       
       const telegramId = tg.initDataUnsafe?.user?.id;
@@ -148,7 +87,8 @@
         user = await window.getUser(telegramId);
       }
       if (!user) {
-        user = JSON.parse(localStorage.getItem('tma_user') || 'null');
+        const cached = localStorage.getItem('tma_user');
+        user = cached ? JSON.parse(cached) : null;
       }
 
       if (user) {
@@ -157,7 +97,6 @@
         document.getElementById('profile-nickname').textContent = user.nickname;
         document.getElementById('profile-level').textContent = user.level;
         
-        // Показываем кнопку админки только для разрешённых ID
         if (ADMIN_IDS.includes(telegramId)) {
           document.getElementById('admin-btn').style.display = 'flex';
         }
@@ -171,48 +110,41 @@
     function setupButtons(telegramId) {
       console.log('🔹 [PROFILE] Setting up buttons...');
 
-      // 1. Кнопка выхода
       const logoutBtn = document.getElementById('logout-btn');
       if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
+        logoutBtn.addEventListener('click', function() {
           localStorage.removeItem('tma_user');
           window.location.href = 'index.html';
         });
       }
 
-      // 2. Кнопка удаления аккаунта
       const deleteBtn = document.getElementById('delete-account-btn');
       const modal = document.getElementById('delete-modal');
       const cancelBtn = document.getElementById('cancel-delete');
       const confirmBtn = document.getElementById('confirm-delete');
 
-      // Проверка наличия элементов
       if (!deleteBtn || !modal || !cancelBtn || !confirmBtn) {
-        console.error('❌ [PROFILE] One of modal elements not found');
+        console.error('❌ [PROFILE] Modal elements not found');
         return;
       }
 
-      // Открытие модального окна
-      deleteBtn.addEventListener('click', () => {
+      deleteBtn.addEventListener('click', function() {
         console.log('🔹 [PROFILE] Open delete modal');
         modal.style.display = 'block';
       });
 
-      // Закрытие (Отмена)
-      cancelBtn.addEventListener('click', () => {
+      cancelBtn.addEventListener('click', function() {
         console.log('🔹 [PROFILE] Cancel delete');
         modal.style.display = 'none';
       });
 
-      // Закрытие по клику вне окна
-      modal.addEventListener('click', (e) => {
+      modal.addEventListener('click', function(e) {
         if (e.target === modal) {
           modal.style.display = 'none';
         }
       });
 
-      // Подтверждение удаления
-      confirmBtn.addEventListener('click', async () => {
+      confirmBtn.addEventListener('click', async function() {
         console.log('🔹 [PROFILE] Confirm delete clicked');
         
         const deleteFunc = window.deleteUser || deleteUserLocal;
@@ -221,7 +153,6 @@
           return;
         }
 
-        // Блокируем кнопку на время удаления
         confirmBtn.textContent = 'Удаление...';
         confirmBtn.disabled = true;
 
@@ -233,19 +164,17 @@
             window.location.href = 'index.html';
           } else {
             tg.showAlert('❌ Ошибка при удалении');
-            resetConfirmButton();
+            confirmBtn.textContent = 'Удалить';
+            confirmBtn.disabled = false;
+            modal.style.display = 'none';
           }
         } catch (err) {
           tg.showAlert('Ошибка: ' + err.message);
-          resetConfirmButton();
+          confirmBtn.textContent = 'Удалить';
+          confirmBtn.disabled = false;
+          modal.style.display = 'none';
         }
       });
-
-      function resetConfirmButton() {
-        confirmBtn.textContent = 'Удалить';
-        confirmBtn.disabled = false;
-        modal.style.display = 'none';
-      }
     }
   </script>
 </body>
