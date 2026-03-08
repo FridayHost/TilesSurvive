@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="css/style.css">
@@ -53,7 +53,7 @@
   <script src="js/api.js"></script>
   
   <script>
-    console.log('🔹 [PROFILE] Script started');
+    console.log('🔹 Profile script started');
     const tg = window.Telegram.WebApp;
     tg.expand();
 
@@ -68,27 +68,32 @@
         await db.collection('users').doc(String(telegramId)).delete();
         return true;
       } catch (error) {
-        console.error('❌ [PROFILE] Delete error:', error);
+        console.error('❌ Delete error:', error);
         return false;
       }
     }
 
     window.addEventListener('load', async function() {
-      console.log('🔹 [PROFILE] Window loaded');
+      console.log('🔹 Window loaded');
       
       const telegramId = tg.initDataUnsafe?.user?.id;
+      
       if (!telegramId) {
         document.getElementById('loading').textContent = '❌ Откройте через Telegram';
         return;
       }
 
       let user = null;
+      
       if (typeof window.getUser === 'function') {
         user = await window.getUser(telegramId);
       }
+      
       if (!user) {
         const cached = localStorage.getItem('tma_user');
-        user = cached ? JSON.parse(cached) : null;
+        if (cached) {
+          user = JSON.parse(cached);
+        }
       }
 
       if (user) {
@@ -108,7 +113,7 @@
     });
 
     function setupButtons(telegramId) {
-      console.log('🔹 [PROFILE] Setting up buttons...');
+      console.log('🔹 Setting up buttons...');
 
       const logoutBtn = document.getElementById('logout-btn');
       if (logoutBtn) {
@@ -124,17 +129,17 @@
       const confirmBtn = document.getElementById('confirm-delete');
 
       if (!deleteBtn || !modal || !cancelBtn || !confirmBtn) {
-        console.error('❌ [PROFILE] Modal elements not found');
+        console.error('❌ Modal elements not found');
         return;
       }
 
       deleteBtn.addEventListener('click', function() {
-        console.log('🔹 [PROFILE] Open delete modal');
+        console.log('🔹 Open delete modal');
         modal.style.display = 'block';
       });
 
       cancelBtn.addEventListener('click', function() {
-        console.log('🔹 [PROFILE] Cancel delete');
+        console.log('🔹 Cancel delete');
         modal.style.display = 'none';
       });
 
@@ -145,9 +150,10 @@
       });
 
       confirmBtn.addEventListener('click', async function() {
-        console.log('🔹 [PROFILE] Confirm delete clicked');
+        console.log('🔹 Confirm delete clicked');
         
         const deleteFunc = window.deleteUser || deleteUserLocal;
+        
         if (typeof deleteFunc !== 'function') {
           tg.showAlert('❌ Ошибка: функция удаления не найдена');
           return;
@@ -158,6 +164,7 @@
 
         try {
           const success = await deleteFunc(telegramId);
+          
           if (success) {
             localStorage.removeItem('tma_user');
             tg.showAlert('✅ Аккаунт удалён!');
