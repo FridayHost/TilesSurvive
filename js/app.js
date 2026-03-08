@@ -1,5 +1,4 @@
-// js/app.js - Основная логика
-
+// js/app.js
 console.log('🔹 [APP] Script started');
 
 const tg = window.Telegram.WebApp;
