@@ -1,68 +1,60 @@
 // js/api.js - Firebase API функции
 
-console.log('🔹 [API] Script loaded');
+console.log('🔹 [API] Script started');
 
-// Заглушки по умолчанию (чтобы не было ошибки "not defined")
+// Заглушки по умолчанию
 window.saveUser = async (data) => {
-  console.error('❌ [API] saveUser called before initialization');
+  console.error('❌ [API] saveUser: Firebase not initialized');
   return false;
 };
 
 window.getUser = async (id) => {
-  console.error('❌ [API] getUser called before initialization');
+  console.error('❌ [API] getUser: Firebase not initialized');
   return null;
 };
 
 window.deleteUser = async (id) => {
-  console.error('❌ [API] deleteUser called before initialization');
+  console.error('❌ [API] deleteUser: Firebase not initialized');
   return false;
 };
 
-// Проверка Firebase
+// Проверка Firebase SDK
 if (typeof firebase === 'undefined') {
-  console.error('❌ [API] Firebase SDK is NOT loaded. Check index.html');
+  console.error('❌ [API] Firebase SDK NOT loaded');
 } else {
   console.log('🔥 [API] Firebase SDK found');
 
   try {
-    // Проверка конфига
     if (typeof firebaseConfig === 'undefined') {
-      console.error('❌ [API] firebaseConfig is NOT defined. Check config.js');
+      console.error('❌ [API] firebaseConfig NOT defined');
     } else {
       console.log('⚙️ [API] Config found, initializing...');
       
-      // Инициализация
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
-      console.log('✅ [API] Firebase initialized successfully');
+      console.log('✅ [API] Firebase initialized');
 
-      // ✅ СОХРАНИТЬ ПОЛЬЗОВАТЕЛЯ
       window.saveUser = async (userData) => {
         try {
-          console.log('💾 [API] Saving user:', userData.telegram_id);
           await db.collection('users').doc(String(userData.telegram_id)).set(userData);
-          console.log('✅ [API] User saved successfully');
+          console.log('✅ [API] User saved');
           return true;
         } catch (error) {
-          console.error('❌ [API] Save error:', error.code, error.message);
+          console.error('❌ [API] Save error:', error);
           return false;
         }
       };
 
-      // ✅ ПОЛУЧИТЬ ПОЛЬЗОВАТЕЛЯ
       window.getUser = async (telegramId) => {
         try {
           const doc = await db.collection('users').doc(String(telegramId)).get();
-          const data = doc.exists ? doc.data() : null;
-          console.log('📥 [API] User loaded:', telegramId, data ? 'found' : 'not found');
-          return data;
+          return doc.exists ? doc.data() : null;
         } catch (error) {
           console.error('❌ [API] Get error:', error);
           return null;
         }
       };
 
-      // ✅ УДАЛИТЬ ПОЛЬЗОВАТЕЛЯ (с архивацией)
       window.deleteUser = async (telegramId) => {
         try {
           const doc = await db.collection('users').doc(String(telegramId)).get();
@@ -82,7 +74,7 @@ if (typeof firebase === 'undefined') {
       };
     }
   } catch (err) {
-    console.error('❌ [API] Firebase init error:', err.code, err.message);
+    console.error('❌ [API] Init error:', err);
   }
 }
 
