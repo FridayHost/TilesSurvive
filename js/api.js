@@ -2,7 +2,7 @@
 
 console.log('🔹 [API] Script loaded');
 
-// Заглушки по умолчанию
+// Заглушки по умолчанию (чтобы не было ошибки "not defined")
 window.saveUser = async (data) => {
   console.error('❌ [API] saveUser called before initialization');
   return false;
