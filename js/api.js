@@ -1,5 +1,4 @@
-// js/api.js - Firebase API функции
-
+// js/api.js
 console.log('🔹 [API] Script started');
 
 // Заглушки по умолчанию
@@ -18,7 +17,7 @@ window.deleteUser = async (id) => {
   return false;
 };
 
-// Проверка Firebase SDK
+// Проверка Firebase
 if (typeof firebase === 'undefined') {
   console.error('❌ [API] Firebase SDK NOT loaded');
 } else {
@@ -78,8 +77,4 @@ if (typeof firebase === 'undefined') {
   }
 }
 
-console.log('🏁 [API] Functions ready:', {
-  saveUser: typeof window.saveUser,
-  getUser: typeof window.getUser,
-  deleteUser: typeof window.deleteUser
-});
+console.log('🏁 [API] Functions ready');
