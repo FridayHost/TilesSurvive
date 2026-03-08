@@ -1,11 +1,10 @@
-// js/app.js - Основная логика приложения
+// js/app.js - Основная логика
 
-console.log('🔹 [APP] Script loaded');
+console.log('🔹 [APP] Script started');
 
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// Переводы
 const translations = {
   ru: {
     title: 'Регистрация',
@@ -33,7 +32,6 @@ const translations = {
 
 let currentLang = 'ru';
 
-// Применение переводов
 function applyTranslations() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
@@ -43,7 +41,6 @@ function applyTranslations() {
   });
 }
 
-// Переключение языка
 function updateLangButtons() {
   document.getElementById('lang-ru')?.classList.toggle('active', currentLang === 'ru');
   document.getElementById('lang-en')?.classList.toggle('active', currentLang === 'en');
@@ -61,34 +58,21 @@ document.getElementById('lang-en')?.addEventListener('click', () => {
   applyTranslations();
 });
 
-// Проверка при загрузке
 window.addEventListener('load', async () => {
   const telegramId = tg.initDataUnsafe?.user?.id;
+  if (!telegramId) return;
 
-  if (!telegramId) {
-    console.warn('⚠️ [APP] No Telegram ID');
-    return;
+  if (typeof window.getUser === 'function') {
+    const existingUser = await window.getUser(telegramId);
+    if (existingUser) {
+      window.location.href = 'profile.html';
+      return;
+    }
   }
 
-  // Проверка: загрузилась ли функция getUser?
-  if (typeof window.getUser !== 'function') {
-    console.error('❌ [APP] getUser function not found!');
-    return;
-  }
-
-  // Если пользователь уже зарегистрирован — редирект в профиль
-  const existingUser = await window.getUser(telegramId);
-  if (existingUser) {
-    console.log('✅ [APP] User exists, redirecting to profile');
-    window.location.href = 'profile.html';
-    return;
-  }
-
-  console.log('📝 [APP] New user, showing registration');
   applyTranslations();
 });
 
-// Обработка формы
 document.getElementById('register-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -102,9 +86,6 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
   const level = parseInt(document.getElementById('level')?.value);
   const telegramId = tg.initDataUnsafe?.user?.id;
 
-  console.log('📝 [APP] Form submitted', { nickname, union, state, level, telegramId });
-
-  // Валидация
   if (!nickname || !union || !state || !level) {
     showError(translations[currentLang].error_required, errorMsg);
     return;
@@ -115,9 +96,7 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
     return;
   }
 
-  // Проверка функции сохранения
   if (typeof window.saveUser !== 'function') {
-    console.error('❌ [APP] saveUser function NOT found!');
     showError('System error: saveUser not loaded', errorMsg);
     return;
   }
@@ -132,19 +111,15 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
     registered_at: new Date().toISOString()
   };
 
-  console.log('💾 [APP] Saving user:', userData);
-
   try {
     const success = await window.saveUser(userData);
     if (success) {
       localStorage.setItem('tma_user', JSON.stringify(userData));
-      console.log('✅ [APP] Registration complete');
       window.location.href = 'profile.html';
     } else {
       showError(translations[currentLang].error_save, errorMsg);
     }
   } catch (err) {
-    console.error('❌ [APP] Registration error:', err);
     showError('Error: ' + err.message, errorMsg);
   }
 });
