@@ -19,13 +19,15 @@
       </div>
 
       <nav class="main-menu">
-        <a href="schedule.html" class="menu-btn">📅 Расписание</a>
-        <a href="profile.html" class="menu-btn active">👤 Профиль</a>
-        <a href="news.html" class="menu-btn">📰 Новости</a>
-        <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
-        <a href="channels.html" class="menu-btn">📢 Каналы</a>
-        <a href="support.html" class="menu-btn">❓ Поддержка</a>
-      </nav>
+  <a href="schedule.html" class="menu-btn">📅 Расписание</a>
+  <a href="profile.html" class="menu-btn active">👤 Профиль</a>
+  <a href="news.html" class="menu-btn">📰 Новости</a>
+  <a href="lion-reminder.html" class="menu-btn">🦁 Лев</a>
+  <a href="channels.html" class="menu-btn">📢 Каналы</a>
+  <a href="support.html" class="menu-btn">❓ Поддержка</a>
+  <!-- Кнопка Админка (видна только админам) -->
+  <a href="admin.html" class="menu-btn" id="admin-btn" style="display: none;">🔐 Админка</a>
+</nav>
 
       <button class="secondary-btn" id="logout-btn">Выйти</button>
       <button class="delete-btn" id="delete-account-btn">🗑️ Удалить аккаунт</button>
@@ -71,6 +73,13 @@
 
     window.addEventListener('load', async () => {
       const telegramId = tg.initDataUnsafe?.user?.id;
+
+  // Показываем кнопку админки только для разрешённых ID
+  const ADMIN_IDS = [1182017243, 332240305];
+  if (ADMIN_IDS.includes(telegramId)) {
+    document.getElementById('admin-btn').style.display = 'flex';
+  }
+});
 
       if (!telegramId) {
         document.getElementById('loading').textContent = '❌ Откройте через Telegram';
@@ -152,3 +161,4 @@
   </script>
 </body>
 </html>
+
