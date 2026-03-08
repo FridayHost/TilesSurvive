@@ -2,83 +2,357 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Админ-панель</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="css/style.css">
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
-    .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 10px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-    th { background: #3390ec; color: white; }
-    tr:hover { background: #f9f9f9; }
-    .loading { text-align: center; color: #666; padding: 20px; }
-    .error { color: #e53935; }
+    .admin-header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--secondary-bg);
+      margin-bottom: 20px;
+    }
+    .admin-header h1 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      color: #e53935;
+    }
+    .admin-header p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--hint-color);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      padding: 16px;
+      background: var(--secondary-bg);
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--button-color);
+      margin-bottom: 4px;
+    }
+    .stat-card .label {
+      font-size: 12px;
+      color: var(--hint-color);
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--button-color);
+      color: var(--button-text);
+    }
+    .user-list, .deleted-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .user-card, .deleted-card {
+      padding: 14px;
+      background: var(--secondary-bg);
+      border-radius: 12px;
+    }
+    .user-card-header, .deleted-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .user-nickname {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .user-id {
+      font-size: 11px;
+      color: var(--hint-color);
+      background: rgba(0,0,0,0.08);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .user-details {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      font-size: 13px;
+    }
+    .user-detail-item {
+      color: var(--hint-color);
+    }
+    .user-detail-item strong {
+      color: var(--text-color);
+    }
+    .deleted-badge {
+      background: #e53935;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--hint-color);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--hint-color);
+      font-size: 14px;
+    }
+    .refresh-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 16px;
+      background: var(--button-color);
+      color: var(--button-text);
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .back-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      background: transparent;
+      color: var(--button-color);
+      border: 1px solid var(--button-color);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>👥 Зарегистрированные пользователи</h2>
-    <div id="content">
-      <p class="loading">Загрузка...</p>
+    <div class="admin-header">
+      <h1>🔐 Админ-панель</h1>
+      <p id="admin-user-info">Проверка доступа...</p>
+    </div>
+
+    <div id="access-denied" style="display: none;">
+      <div class="empty-state">
+        <p>❌ Доступ запрещён</p>
+        <p style="font-size: 12px; margin-top: 8px;">Только авторизованные администраторы могут просматривать эту страницу</p>
+        <button class="back-btn" onclick="window.location.href='profile.html'">← Назад в профиль</button>
+      </div>
+    </div>
+
+    <div id="admin-content" style="display: none;">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="value" id="stat-total">0</div>
+          <div class="label">Всего пользователей</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="stat-deleted">0</div>
+          <div class="label">Удалено аккаунтов</div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="users">👥 Пользователи</button>
+        <button class="tab-btn" data-tab="deleted">🗑️ Удалённые</button>
+      </div>
+
+      <div id="tab-users" class="user-list">
+        <div class="loading">Загрузка...</div>
+      </div>
+
+      <div id="tab-deleted" class="deleted-list" style="display: none;">
+        <div class="loading">Загрузка...</div>
+      </div>
+
+      <button class="refresh-btn" id="refresh-btn">🔄 Обновить</button>
+      <button class="back-btn" onclick="window.location.href='profile.html'">← Назад в профиль</button>
     </div>
   </div>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="config.js"></script>
-  
   <script>
-    // 🔐 ПРОСТАЯ ЗАЩИТА: введите пароль
-    const ADMIN_PASSWORD = "mySecretPassword123"; // ⚠️ Поменяйте на свой!
-    
-    const entered = prompt("Введите пароль администратора:");
-    if (entered !== ADMIN_PASSWORD) {
-      document.getElementById('content').innerHTML = '<p class="error">❌ Доступ запрещён</p>';
-      throw new Error('Access denied');
+    console.log('🔹 Admin panel started');
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // 🔐 Разрешённые ID администраторов
+    const ADMIN_IDS = [1182017243, 332240305];
+
+    // Проверка доступа
+    const telegramId = tg.initDataUnsafe?.user?.id;
+    const isAdmin = ADMIN_IDS.includes(telegramId);
+
+    console.log('🔹 User ID:', telegramId);
+    console.log('🔹 Is Admin:', isAdmin);
+
+    if (!isAdmin) {
+      document.getElementById('access-denied').style.display = 'block';
+      document.querySelector('.admin-header').style.display = 'none';
+    } else {
+      document.getElementById('admin-user-info').textContent = `Администратор: ${tg.initDataUnsafe?.user?.first_name || 'Unknown'} (ID: ${telegramId})`;
+      document.getElementById('admin-content').style.display = 'block';
+      initAdminPanel();
     }
 
-    // Инициализация Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // Загрузка пользователей
-    async function loadUsers() {
-      try {
-        const snapshot = await db.collection('users').orderBy('registered_at', 'desc').get();
+    // Переключение вкладок
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         
-        if (snapshot.empty) {
-          document.getElementById('content').innerHTML = '<p>Пока нет зарегистрированных пользователей</p>';
-          return;
+        const tab = btn.dataset.tab;
+        document.getElementById('tab-users').style.display = tab === 'users' ? 'flex' : 'none';
+        document.getElementById('tab-deleted').style.display = tab === 'deleted' ? 'flex' : 'none';
+        
+        if (tab === 'users') loadUsers();
+        else loadDeletedUsers();
+      });
+    });
+
+    // Обновление
+    document.getElementById('refresh-btn')?.addEventListener('click', () => {
+      const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+      if (activeTab === 'users') loadUsers();
+      else loadDeletedUsers();
+    });
+
+    async function initAdminPanel() {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Загрузка пользователей
+        async function loadUsers() {
+          const container = document.getElementById('tab-users');
+          container.innerHTML = '<div class="loading">Загрузка...</div>';
+
+          const snapshot = await db.collection('users').orderBy('registered_at', 'desc').get();
+          
+          if (snapshot.empty) {
+            container.innerHTML = '<div class="empty-state">Нет зарегистрированных пользователей</div>';
+            document.getElementById('stat-total').textContent = '0';
+            return;
+          }
+
+          document.getElementById('stat-total').textContent = snapshot.size;
+
+          let html = '';
+          snapshot.forEach(doc => {
+            const u = doc.data();
+            const regDate = u.registered_at ? new Date(u.registered_at).toLocaleString('ru-RU', { 
+              day: '2-digit', month: '2-digit', year: '2-digit', 
+              hour: '2-digit', minute: '2-digit' 
+            }) : '—';
+            
+            html += `
+              <div class="user-card">
+                <div class="user-card-header">
+                  <span class="user-nickname">${escapeHtml(u.nickname || '—')}</span>
+                  <span class="user-id">ID: ${u.telegram_id || '—'}</span>
+                </div>
+                <div class="user-details">
+                  <div class="user-detail-item"><strong>Союз:</strong> ${escapeHtml(u.union || '—')}</div>
+                  <div class="user-detail-item"><strong>Штат:</strong> ${escapeHtml(u.state || '—')}</div>
+                  <div class="user-detail-item"><strong>Уровень:</strong> ${u.level || '—'}</div>
+                  <div class="user-detail-item"><strong>Язык:</strong> ${u.language || '—'}</div>
+                  <div class="user-detail-item" style="grid-column: span 2;"><strong>Регистрация:</strong> ${regDate}</div>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
         }
 
-        let html = '<table><thead><tr><th>ID</th><th>Ник</th><th>Союз</th><th>Штат</th><th>Уровень</th><th>Язык</th><th>Дата</th></tr></thead><tbody>';
-        
-        snapshot.forEach(doc => {
-          const u = doc.data();
-          html += `
-            <tr>
-              <td>${u.telegram_id || '-'}</td>
-              <td><strong>${u.nickname || '-'}</strong></td>
-              <td>${u.union || '-'}</td>
-              <td>${u.state || '-'}</td>
-              <td>${u.level || '-'}</td>
-              <td>${u.language || '-'}</td>
-              <td>${u.registered_at ? new Date(u.registered_at).toLocaleString('ru-RU') : '-'}</td>
-            </tr>
-          `;
-        });
-        
-        html += '</tbody></table>';
-        document.getElementById('content').innerHTML = html;
-        
+        // Загрузка удалённых пользователей
+        async function loadDeletedUsers() {
+          const container = document.getElementById('tab-deleted');
+          container.innerHTML = '<div class="loading">Загрузка...</div>';
+
+          const snapshot = await db.collection('deleted_users').orderBy('deleted_at', 'desc').get();
+          
+          if (snapshot.empty) {
+            container.innerHTML = '<div class="empty-state">Нет удалённых аккаунтов</div>';
+            document.getElementById('stat-deleted').textContent = '0';
+            return;
+          }
+
+          document.getElementById('stat-deleted').textContent = snapshot.size;
+
+          let html = '';
+          snapshot.forEach(doc => {
+            const u = doc.data();
+            const delDate = u.deleted_at ? new Date(u.deleted_at).toLocaleString('ru-RU', { 
+              day: '2-digit', month: '2-digit', year: '2-digit', 
+              hour: '2-digit', minute: '2-digit' 
+            }) : '—';
+            const regDate = u.registered_at ? new Date(u.registered_at).toLocaleString('ru-RU', { 
+              day: '2-digit', month: '2-digit' 
+            }) : '—';
+            
+            html += `
+              <div class="deleted-card">
+                <div class="user-card-header">
+                  <span class="user-nickname">${escapeHtml(u.nickname || '—')} <span class="deleted-badge">УДАЛЁН</span></span>
+                  <span class="user-id">ID: ${u.telegram_id || '—'}</span>
+                </div>
+                <div class="user-details">
+                  <div class="user-detail-item"><strong>Союз:</strong> ${escapeHtml(u.union || '—')}</div>
+                  <div class="user-detail-item"><strong>Штат:</strong> ${escapeHtml(u.state || '—')}</div>
+                  <div class="user-detail-item"><strong>Уровень:</strong> ${u.level || '—'}</div>
+                  <div class="user-detail-item"><strong>Регистрация:</strong> ${regDate}</div>
+                  <div class="user-detail-item" style="grid-column: span 2;"><strong>Удаление:</strong> ${delDate}</div>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        }
+
+        // Экранирование HTML
+        function escapeHtml(text) {
+          if (!text) return '—';
+          return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Экспортируем функции глобально
+        window.loadUsers = loadUsers;
+        window.loadDeletedUsers = loadDeletedUsers;
+
+        // Загружаем данные
+        loadUsers();
+
       } catch (err) {
-        console.error('Error:', err);
-        document.getElementById('content').innerHTML = `<p class="error">Ошибка загрузки: ${err.message}</p>`;
+        console.error('❌ Admin panel error:', err);
+        document.getElementById('tab-users').innerHTML = `<div class="empty-state">Ошибка загрузки: ${err.message}</div>`;
       }
     }
-
-    loadUsers();
   </script>
 </body>
 </html>
